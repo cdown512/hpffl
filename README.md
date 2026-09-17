@@ -28,6 +28,7 @@ uploads/        Outfit font files
 | `file` | yes | filename inside `photos/` |
 | `year` | no | season it belongs to; omit for undated/general |
 | `team` | no | franchise name spelled exactly as in the app — also puts the photo on that team's page |
+| `teams` | no | use instead of `team` to tag several franchises: `teams: ["War Pigs", "Unforgiven"]`. The photo appears on every tagged team's page; the first name is the Gallery's click target |
 | `caption` | no | defaults to a tidied-up filename |
 | `sort` | no | lower first within a year |
 

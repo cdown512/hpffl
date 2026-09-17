@@ -874,7 +874,7 @@ class Component extends DCLogic {
   }
 
   teamPhotos(name) {
-    const hits = this.photoManifest().filter(p => p.team === name)
+    const hits = this.photoManifest().filter(p => p.teams.indexOf(name) !== -1)
       .sort((a, b) => (b.year || 0) - (a.year || 0) || a.sort - b.sort).slice(0, 4);
     if (!hits.length) return null;
     return hits.map(p => ({
@@ -890,7 +890,8 @@ class Component extends DCLogic {
     this._photos = raw.filter(p => p && p.file).map((p, i) => ({
       src: 'photos/' + p.file,
       year: p.year == null ? null : +p.year,
-      team: p.team || null,
+      teams: [].concat(p.teams || p.team || []).filter(Boolean),
+      team: [].concat(p.teams || p.team || []).filter(Boolean)[0] || null,
       caption: p.caption || String(p.file).replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' '),
       sort: p.sort == null ? i : +p.sort
     }));
