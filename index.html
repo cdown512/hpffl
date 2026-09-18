@@ -634,6 +634,14 @@ a:hover{color:var(--color-accent-300)}
       <div class="num" style="font-family:var(--font-heading);font-size:30px;line-height:1.1">{{ gallery.count }}</div>
       <div style="font-size:11px;color:var(--color-neutral-500)">{{ gallery.spanLabel }}</div>
     </div>
+    <div style="display:flex;flex-direction:column;gap:7px;flex:none">
+      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-neutral-500)">Sort by year</div>
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ gallery.sortOpts }}" as="o" hint-placeholder-count="2">
+          <button class="{{ o.cls }}" onClick="{{ o.on }}" style="font-size:11.5px;padding:6px 11px">{{ o.label }}</button>
+        </sc-for>
+      </div>
+    </div>
   </div>
 
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
@@ -693,9 +701,16 @@ a:hover{color:var(--color-accent-300)}
     <div class="dialog-backdrop" onClick="{{ lightbox.close }}" style="position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:40px">
       <div class="dialog elev-lg" onClick="{{ lightbox.stop }}" style="max-width:min(1100px,92vw);width:100%;padding:0;overflow:hidden;position:relative">
         <button onClick="{{ lightbox.close }}" aria-label="Close" class="btn btn-icon" style="position:absolute;top:12px;right:12px;z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px)">✕</button>
+        <sc-if value="{{ lightbox.multi }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ lightbox.prev }}" aria-label="Previous photo" class="btn btn-icon" style="position:absolute;top:calc(min(70vh,640px)/2);left:12px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px);font-size:16px">‹</button>
+          <button onClick="{{ lightbox.next }}" aria-label="Next photo" class="btn btn-icon" style="position:absolute;top:calc(min(70vh,640px)/2);right:12px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px);font-size:16px">›</button>
+        </sc-if>
         <div style="{{ lightbox.imgStyle }}"></div>
         <div style="padding:18px 22px 20px;display:flex;flex-direction:column;gap:10px">
-          <div class="dialog-title" style="margin:0;font-size:17px">{{ lightbox.caption }}</div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+            <div class="dialog-title" style="margin:0;font-size:17px">{{ lightbox.caption }}</div>
+            <span class="num" style="font-size:11px;color:var(--color-neutral-500);letter-spacing:0.04em;white-space:nowrap">{{ lightbox.position }}</span>
+          </div>
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
             <sc-if value="{{ lightbox.hasYear }}" hint-placeholder-val="{{ false }}">
               <span class="num" style="font-size:12px;color:var(--color-neutral-400);letter-spacing:0.04em">{{ lightbox.year }}</span>
@@ -719,7 +734,7 @@ a:hover{color:var(--color-accent-300)}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1200},&quot;gridMetric&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;championships&quot;,&quot;points&quot;,&quot;winpct&quot;],&quot;default&quot;:&quot;championships&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Season grid&quot;},&quot;showFunStats&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Dashboard&quot;}}">
 class Component extends DCLogic {
-  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYears: [], galleryTeams: [], teamMenu: false, gridActive: true, lightbox: null };
+  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYears: [], galleryTeams: [], galleryAsc: false, teamMenu: false, gridActive: true, lightbox: null };
 
   constructor(props) { super(props); this.build(); }
   componentDidMount() {
@@ -732,7 +747,12 @@ class Component extends DCLogic {
     }
     this.onDocDown = e => { if (this.state.teamMenu && !(e.target.closest && e.target.closest('[aria-expanded]')) && !(e.target.closest && e.target.closest('button'))) this.setState({ teamMenu: false }); };
     document.addEventListener('mousedown', this.onDocDown);
-    this.onKey = e => { if (e.key === 'Escape' && this.state.lightbox) this.setState({ lightbox: null }); };
+    this.onKey = e => {
+      if (!this.state.lightbox) return;
+      if (e.key === 'Escape') this.setState({ lightbox: null });
+      else if (e.key === 'ArrowLeft' && this._step) { e.preventDefault(); this._step(-1); }
+      else if (e.key === 'ArrowRight' && this._step) { e.preventDefault(); this._step(1); }
+    };
     document.addEventListener('keydown', this.onKey);
     this.onRoute = () => this.setState(this.readRoute());
     window.addEventListener('popstate', this.onRoute);
@@ -767,6 +787,16 @@ class Component extends DCLogic {
   }
   componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('keydown', this.onKey); document.removeEventListener('mousedown', this.onDocDown); }
 
+  scrollTop() {
+    requestAnimationFrame(() => {
+      try { window.scrollTo(0, 0); } catch (e) {}
+      const d = document.scrollingElement || document.documentElement;
+      if (d) d.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+      let n = this._rootEl || document.querySelector('x-dc');
+      while (n && n.parentElement) { n = n.parentElement; if (n.scrollTop) n.scrollTop = 0; }
+    });
+  }
   hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   eraOf(y) { return y <= 2002 ? 'paper' : (y <= 2013 ? 'fanstar' : 'espn'); }
   pctStr(p) { return p == null ? '—' : p.toFixed(3).replace(/^0/, ''); }
@@ -1436,8 +1466,9 @@ class Component extends DCLogic {
         if (!byYear.has(k)) byYear.set(k, []);
         byYear.get(k).push(p);
       });
+      const asc = S.galleryAsc;
       galleryData = Array.from(byYear.keys())
-        .sort((a, b) => (a === 'undated' ? 1 : b === 'undated' ? -1 : b - a))
+        .sort((a, b) => (a === 'undated' ? 1 : b === 'undated' ? -1 : (asc ? a - b : b - a)))
         .map(k => ({
           year: k === 'undated' ? null : k,
           items: byYear.get(k).slice().sort((a, b) => a.sort - b.sort)
@@ -1459,6 +1490,7 @@ class Component extends DCLogic {
     const yearBtns = [{ label: 'All years', v: 'all' }].concat(galleryData.map(g => ({ label: g.year == null ? 'Undated' : String(g.year), v: g.year == null ? 'undated' : String(g.year) })));
     const teamChipNames = ['all'].concat(Array.from(new Set(galleryData.reduce((a, g) => a.concat(g.items.reduce((b, i) => b.concat(i[3] || (i[1] ? [i[1]] : [])), [])), []).filter(Boolean))));
     const selYears = S.galleryYears || [], selTeams = S.galleryTeams || [];
+    const flat = [];
     const groups = galleryData.filter(g => {
       const key = g.year == null ? 'undated' : String(g.year);
       return !selYears.length || selYears.indexOf(key) !== -1;
@@ -1467,25 +1499,32 @@ class Component extends DCLogic {
       return {
         title: g.year == null ? 'Undated / General' : String(g.year),
         meta: items.length + (manifest.length ? ' photo' : ' slot') + (items.length === 1 ? '' : 's') + (g.year ? ' · ' + (this.champs[g.year] ? this.champs[g.year] + ' won the title' : 'no champion on record') : ' · no season assigned'),
-        photos: items.map((i, idx) => ({
-          slot: 'g-' + (g.year || 'und') + '-' + idx,
-          placeholder: i[0], caption: i[0], hasTeam: !!i[1], team: i[1] || '',
-          hasImg: !!i[2], noImg: !i[2], imgStyle: i[2] ? this.coverStyle(i[2]) : null,
-          openLightbox: i[2] ? () => this.setState({ lightbox: { src: i[2], caption: i[0], year: g.year, teams: i[3] || (i[1] ? [i[1]] : []) } }) : () => {},
-          on: i[1] ? () => this.setState({ screen: 'team', teamId: i[1] }) : () => {}
-        })),
+        photos: items.map((i, idx) => {
+          let fi = -1;
+          if (i[2]) { fi = flat.length; flat.push({ src: i[2], caption: i[0], year: g.year, teams: i[3] || (i[1] ? [i[1]] : []) }); }
+          return {
+            slot: 'g-' + (g.year || 'und') + '-' + idx,
+            placeholder: i[0], caption: i[0], hasTeam: !!i[1], team: i[1] || '',
+            hasImg: !!i[2], noImg: !i[2], imgStyle: i[2] ? this.coverStyle(i[2]) : null,
+            openLightbox: i[2] ? () => this.setState({ lightbox: { i: fi } }) : () => {},
+            on: i[1] ? () => this.setState({ screen: 'team', teamId: i[1] }) : () => {}
+          };
+        }),
         count: items.length
       };
     }).filter(g => g.photos.length);
 
     const mYears = manifest.map(p => p.year).filter(y => y != null);
     const gallery = {
-      heading: manifest.length
-        ? manifest.length + ' photograph' + (manifest.length === 1 ? '' : 's') + ' on file'
-        : played + ' seasons, awaiting photographs',
+      heading: 'A picture is worth 1000 words',
       sub: manifest.length
-        ? 'Grouped by season, newest first. Filter by year or tagged franchise.'
+        ? 'Grouped by year, newest first by default. Filter by year or tagged franchise.'
         : 'Slots are grouped by season, newest first. Add pictures to photos/ and list them in photos.js and they appear here.',
+      sortOpts: [{ label: 'Newest first', v: false }, { label: 'Oldest first', v: true }].map(o => ({
+        label: o.label,
+        cls: !!S.galleryAsc === o.v ? 'btn btn-primary' : 'btn btn-secondary',
+        on: () => this.setState({ galleryAsc: o.v })
+      })),
       count: manifest.length ? String(manifest.length) : '0',
       spanLabel: mYears.length
         ? (Math.min.apply(null, mYears) === Math.max.apply(null, mYears)
@@ -1505,7 +1544,10 @@ class Component extends DCLogic {
       groups, empty: !groups.length
     };
 
-    const lb = S.lightbox;
+    this._flat = flat;
+    const li = S.lightbox && flat.length ? Math.max(0, Math.min(flat.length - 1, S.lightbox.i)) : -1;
+    const lb = li >= 0 ? flat[li] : null;
+    const step = d => this.setState({ lightbox: { i: (li + d + flat.length) % flat.length } });
     const lightbox = {
       open: !!lb,
       close: () => this.setState({ lightbox: null }),
@@ -1513,9 +1555,14 @@ class Component extends DCLogic {
       caption: lb ? lb.caption : '',
       year: lb && lb.year != null ? String(lb.year) : '',
       hasYear: !!(lb && lb.year != null),
+      multi: flat.length > 1,
+      position: lb ? (li + 1) + ' / ' + flat.length : '',
+      prev: e => { e.stopPropagation(); step(-1); },
+      next: e => { e.stopPropagation(); step(1); },
       imgStyle: lb ? { backgroundImage: 'url("' + lb.src + '")', backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundColor: 'var(--color-neutral-900)', width: '100%', height: 'min(70vh, 640px)' } : null,
       teams: lb ? (lb.teams || []).map(n => ({ label: n, on: () => this.setState({ lightbox: null, screen: 'team', teamId: n }) })) : []
     };
+    this._step = step;
 
     return {
       isDash: S.screen === 'dashboard', isTeam: S.screen === 'team', isGallery: S.screen === 'gallery',
@@ -1523,7 +1570,7 @@ class Component extends DCLogic {
       goDash: e => { e.preventDefault(); this.setState({ screen: 'dashboard' }); },
       goTeam: e => { e.preventDefault(); this.setState({ screen: 'team' }); },
       goGallery: e => { e.preventDefault(); this.setState({ screen: 'gallery' }); },
-      goGalleryTeam: e => { e.preventDefault(); this.setState({ screen: 'gallery', galleryYears: [], galleryTeams: [f.name] }); },
+      goGalleryTeam: e => { e.preventDefault(); this.setState({ screen: 'gallery', galleryYears: [], galleryTeams: [f.name] }, () => this.scrollTop()); },
       teamId: f.name,
       teamMenuOpen: S.teamMenu,
       toggleTeamMenu: e => { e.preventDefault(); this.setState({ teamMenu: !S.teamMenu }); },
