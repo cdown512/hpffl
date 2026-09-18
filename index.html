@@ -1566,7 +1566,8 @@ class Component extends DCLogic {
     if (lb && flat.length > 1) {
       [flat[(li + 1) % flat.length], flat[(li - 1 + flat.length) % flat.length]].forEach(n => {
         if (n && n.src) { const im = new Image(); im.src = n.src; }
-      }
+      });
+    }
 
     return {
       isDash: S.screen === 'dashboard', isTeam: S.screen === 'team', isGallery: S.screen === 'gallery',
