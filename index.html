@@ -602,20 +602,30 @@ a:hover{color:var(--color-accent-300)}
       </div>
       <a href="#" onClick="{{ goGalleryTeam }}" style="font-size:12px;text-decoration:none">See all in Gallery →</a>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
-      <sc-for list="{{ team.photos }}" as="p" hint-placeholder-count="4">
-        <figure>
-          <div style="position:relative;height:150px;border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
-            <sc-if value="{{ p.hasImg }}" hint-placeholder-val="{{ false }}">
-              <img src="{{ p.src }}" alt="{{ p.caption }}" loading="lazy" decoding="async" style="display:block;width:100%;height:100%;object-fit:cover;background:var(--color-neutral-900)" />
-            </sc-if>
-            <sc-if value="{{ p.noImg }}" hint-placeholder-val="{{ true }}">
-              <image-slot id="{{ p.slot }}" shape="rect" placeholder="{{ p.placeholder }}"></image-slot>
-            </sc-if>
-          </div>
-          <figcaption>{{ p.caption }}</figcaption>
-        </figure>
-      </sc-for>
+    <div style="position:relative">
+      <sc-if value="{{ team.stripL }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ team.stripPrev }}" aria-label="Scroll left" class="btn btn-icon" style="position:absolute;top:75px;left:-6px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 82%, transparent);backdrop-filter:blur(6px);font-size:16px">‹</button>
+      </sc-if>
+      <sc-if value="{{ team.stripR }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ team.stripNext }}" aria-label="Scroll right" class="btn btn-icon" style="position:absolute;top:75px;right:-6px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 82%, transparent);backdrop-filter:blur(6px);font-size:16px">›</button>
+      </sc-if>
+      <div ref="{{ team.stripRef }}" onScroll="{{ team.onStripScroll }}" style="display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding-bottom:2px">
+        <sc-for list="{{ team.photos }}" as="p" hint-placeholder-count="4">
+          <figure style="margin:0;flex:0 0 calc((100% - 42px)/4);min-width:180px">
+            <div style="position:relative;height:150px;border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+              <sc-if value="{{ p.hasImg }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ p.openLightbox }}" aria-label="{{ p.caption }}" style="display:block;width:100%;height:100%;padding:0;border:none;background:none;cursor:pointer" style-hover="opacity:0.88">
+                  <img src="{{ p.src }}" alt="{{ p.caption }}" loading="lazy" decoding="async" style="display:block;width:100%;height:100%;object-fit:cover;background:var(--color-neutral-900)" />
+                </button>
+              </sc-if>
+              <sc-if value="{{ p.noImg }}" hint-placeholder-val="{{ true }}">
+                <image-slot id="{{ p.slot }}" shape="rect" placeholder="{{ p.placeholder }}"></image-slot>
+              </sc-if>
+            </div>
+            <figcaption>{{ p.caption }}</figcaption>
+          </figure>
+        </sc-for>
+      </div>
     </div>
   </section>
 </main>
@@ -697,33 +707,34 @@ a:hover{color:var(--color-accent-300)}
     </div>
   </sc-if>
 
-  <sc-if value="{{ lightbox.open }}" hint-placeholder-val="{{ false }}">
-    <div class="dialog-backdrop" onClick="{{ lightbox.close }}" style="position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:40px">
-      <div class="dialog elev-lg" onClick="{{ lightbox.stop }}" style="max-width:min(1100px,92vw);width:100%;padding:0;overflow:hidden;position:relative">
-        <button onClick="{{ lightbox.close }}" aria-label="Close" class="btn btn-icon" style="position:absolute;top:12px;right:12px;z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px)">✕</button>
-        <sc-if value="{{ lightbox.multi }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ lightbox.prev }}" aria-label="Previous photo" class="btn btn-icon" style="position:absolute;top:calc(min(70vh,640px)/2);left:12px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px);font-size:16px">‹</button>
-          <button onClick="{{ lightbox.next }}" aria-label="Next photo" class="btn btn-icon" style="position:absolute;top:calc(min(70vh,640px)/2);right:12px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px);font-size:16px">›</button>
-        </sc-if>
-        <div style="{{ lightbox.imgStyle }}" role="img" aria-label="{{ lightbox.caption }}"></div>
-        <div style="padding:18px 22px 20px;display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
-            <div class="dialog-title" style="margin:0;font-size:17px">{{ lightbox.caption }}</div>
-            <span class="num" style="font-size:11px;color:var(--color-neutral-500);letter-spacing:0.04em;white-space:nowrap">{{ lightbox.position }}</span>
-          </div>
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
-            <sc-if value="{{ lightbox.hasYear }}" hint-placeholder-val="{{ false }}">
-              <span class="num" style="font-size:12px;color:var(--color-neutral-400);letter-spacing:0.04em">{{ lightbox.year }}</span>
-            </sc-if>
-            <sc-for list="{{ lightbox.teams }}" as="t" hint-placeholder-count="2">
-              <button class="tag tag-accent" onClick="{{ t.on }}" style="cursor:pointer;border:none;font-family:inherit;font-size:10.5px;color:var(--color-text)">{{ t.label }}</button>
-            </sc-for>
-          </div>
+</main>
+</sc-if>
+
+<sc-if value="{{ lightbox.open }}" hint-placeholder-val="{{ false }}">
+  <div class="dialog-backdrop" onClick="{{ lightbox.close }}" style="position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:40px">
+    <div class="dialog elev-lg" onClick="{{ lightbox.stop }}" style="max-width:min(1100px,92vw);width:100%;padding:0;overflow:hidden;position:relative">
+      <button onClick="{{ lightbox.close }}" aria-label="Close" class="btn btn-icon" style="position:absolute;top:12px;right:12px;z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px)">✕</button>
+      <sc-if value="{{ lightbox.multi }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ lightbox.prev }}" aria-label="Previous photo" class="btn btn-icon" style="position:absolute;top:calc(min(70vh,640px)/2);left:12px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px);font-size:16px">‹</button>
+        <button onClick="{{ lightbox.next }}" aria-label="Next photo" class="btn btn-icon" style="position:absolute;top:calc(min(70vh,640px)/2);right:12px;transform:translateY(-50%);z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px);font-size:16px">›</button>
+      </sc-if>
+      <div style="{{ lightbox.imgStyle }}" role="img" aria-label="{{ lightbox.caption }}"></div>
+      <div style="padding:18px 22px 20px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+          <div class="dialog-title" style="margin:0;font-size:17px">{{ lightbox.caption }}</div>
+          <span class="num" style="font-size:11px;color:var(--color-neutral-500);letter-spacing:0.04em;white-space:nowrap">{{ lightbox.position }}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+          <sc-if value="{{ lightbox.hasYear }}" hint-placeholder-val="{{ false }}">
+            <span class="num" style="font-size:12px;color:var(--color-neutral-400);letter-spacing:0.04em">{{ lightbox.year }}</span>
+          </sc-if>
+          <sc-for list="{{ lightbox.teams }}" as="t" hint-placeholder-count="2">
+            <button class="tag tag-accent" onClick="{{ t.on }}" style="cursor:pointer;border:none;font-family:inherit;font-size:10.5px;color:var(--color-text)">{{ t.label }}</button>
+          </sc-for>
         </div>
       </div>
     </div>
-  </sc-if>
-</main>
+  </div>
 </sc-if>
 
 <footer style="max-width:1400px;margin:56px auto 0;padding:20px 40px 0;display:flex;justify-content:space-between;gap:24px;font-size:11px;color:var(--color-neutral-600);background-image:linear-gradient(to right,transparent,var(--color-divider) 48px,var(--color-divider) calc(100% - 48px),transparent);background-repeat:no-repeat;background-position:top;background-size:100% 1px">
@@ -734,7 +745,7 @@ a:hover{color:var(--color-accent-300)}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1200},&quot;gridMetric&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;championships&quot;,&quot;points&quot;,&quot;winpct&quot;],&quot;default&quot;:&quot;championships&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Season grid&quot;},&quot;showFunStats&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Dashboard&quot;}}">
 class Component extends DCLogic {
-  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYears: [], galleryTeams: [], galleryAsc: false, teamMenu: false, gridActive: true, lightbox: null };
+  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYears: [], galleryTeams: [], galleryAsc: false, stripL: false, stripR: false, teamMenu: false, gridActive: true, lightbox: null };
 
   constructor(props) { super(props); this.build(); }
   componentDidMount() {
@@ -754,6 +765,8 @@ class Component extends DCLogic {
       else if (e.key === 'ArrowRight' && this._step) { e.preventDefault(); this._step(1); }
     };
     document.addEventListener('keydown', this.onKey);
+    this.onResize = () => this.measureStrip();
+    window.addEventListener('resize', this.onResize);
     this.onRoute = () => this.setState(this.readRoute());
     window.addEventListener('popstate', this.onRoute);
     window.addEventListener('hashchange', this.onRoute);
@@ -784,9 +797,22 @@ class Component extends DCLogic {
   }
   componentDidUpdate(prev) {
     if (prev.screen !== this.state.screen || prev.teamId !== this.state.teamId) this.syncRoute();
+    requestAnimationFrame(() => this.measureStrip());
   }
-  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('keydown', this.onKey); document.removeEventListener('mousedown', this.onDocDown); }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('keydown', this.onKey); document.removeEventListener('mousedown', this.onDocDown); }
 
+  stripRef = el => { this._strip = el; if (el) requestAnimationFrame(() => this.measureStrip()); };
+  measureStrip() {
+    const el = this._strip;
+    if (!el) return;
+    const l = el.scrollLeft > 4;
+    const r = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    if (l !== this.state.stripL || r !== this.state.stripR) this.setState({ stripL: l, stripR: r });
+  }
+  scrollStrip(dir) {
+    const el = this._strip;
+    if (el) el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: 'smooth' });
+  }
   scrollTop() {
     requestAnimationFrame(() => {
       try { window.scrollTo(0, 0); } catch (e) {}
@@ -965,12 +991,14 @@ class Component extends DCLogic {
 
   teamPhotos(name) {
     const hits = this.photoManifest().filter(p => p.teams.indexOf(name) !== -1)
-      .sort((a, b) => (b.year || 0) - (a.year || 0) || a.sort - b.sort).slice(0, 4);
+      .sort((a, b) => (b.year || 0) - (a.year || 0) || a.sort - b.sort);
     if (!hits.length) return null;
-    return hits.map(p => ({
+    return hits.map((p, idx) => ({
       src: p.src, hasImg: true, noImg: false, slot: '',
       placeholder: p.caption,
-      caption: p.year ? p.caption + ' · ' + p.year : p.caption
+      caption: p.year ? p.caption + ' · ' + p.year : p.caption,
+      year: p.year, teams: p.teams,
+      openLightbox: () => this.setState({ lightbox: { i: idx, list: 'team' } })
     }));
   }
 
@@ -1453,8 +1481,15 @@ class Component extends DCLogic {
         { noImg: true, hasImg: false, slot: 'ts-' + this.hash(f.name) + '-2', placeholder: 'Trophy handoff', caption: this.championYears(f.name).length ? 'Title year — ' + this.championYears(f.name).slice(-1)[0] : 'League weekend' },
         { noImg: true, hasImg: false, slot: 'ts-' + this.hash(f.name) + '-3', placeholder: 'Owner portrait', caption: f.owners[0] || 'Owner not on record' },
         { noImg: true, hasImg: false, slot: 'ts-' + this.hash(f.name) + '-4', placeholder: 'Season wrap', caption: 'Season wrap' }
-      ]
+      ],
+      stripRef: this.stripRef,
+      onStripScroll: () => this.measureStrip(),
+      stripL: !!S.stripL,
+      stripR: !!S.stripR,
+      stripPrev: e => { e.preventDefault(); this.scrollStrip(-1); },
+      stripNext: e => { e.preventDefault(); this.scrollStrip(1); }
     };
+    const teamFlat = (this.teamPhotos(f.name) || []).map(p => ({ src: p.src, caption: p.caption, year: p.year, teams: p.teams || [] }));
 
     const recent = this.seasonYears.slice().reverse().slice(0, 6);
     const manifest = this.photoManifest();
@@ -1544,10 +1579,12 @@ class Component extends DCLogic {
       groups, empty: !groups.length
     };
 
-    this._flat = flat;
-    const li = S.lightbox && flat.length ? Math.max(0, Math.min(flat.length - 1, S.lightbox.i)) : -1;
-    const lb = li >= 0 ? flat[li] : null;
-    const step = d => this.setState({ lightbox: { i: (li + d + flat.length) % flat.length } });
+    const lbList = S.lightbox && S.lightbox.list === 'team' ? teamFlat : flat;
+    const lbSrc = S.lightbox ? S.lightbox.list : null;
+    this._flat = lbList;
+    const li = S.lightbox && lbList.length ? Math.max(0, Math.min(lbList.length - 1, S.lightbox.i)) : -1;
+    const lb = li >= 0 ? lbList[li] : null;
+    const step = d => this.setState({ lightbox: { i: (li + d + lbList.length) % lbList.length, list: lbSrc } });
     const lightbox = {
       open: !!lb,
       close: () => this.setState({ lightbox: null }),
@@ -1555,16 +1592,16 @@ class Component extends DCLogic {
       caption: lb ? lb.caption : '',
       year: lb && lb.year != null ? String(lb.year) : '',
       hasYear: !!(lb && lb.year != null),
-      multi: flat.length > 1,
-      position: lb && flat.length > 1 ? (li + 1) + ' / ' + flat.length : '',
+      multi: lbList.length > 1,
+      position: lb && lbList.length > 1 ? (li + 1) + ' / ' + lbList.length : '',
       prev: e => { e.stopPropagation(); step(-1); },
       next: e => { e.stopPropagation(); step(1); },
       imgStyle: lb ? { backgroundImage: 'url("' + lb.src + '")', backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundColor: 'var(--color-neutral-900)', width: '100%', height: 'min(70vh, 640px)' } : null,
       teams: lb ? (lb.teams || []).map(n => ({ label: n, on: () => this.setState({ lightbox: null, screen: 'team', teamId: n }) })) : []
     };
     this._step = step;
-    if (lb && flat.length > 1) {
-      [flat[(li + 1) % flat.length], flat[(li - 1 + flat.length) % flat.length]].forEach(n => {
+    if (lb && lbList.length > 1) {
+      [lbList[(li + 1) % lbList.length], lbList[(li - 1 + lbList.length) % lbList.length]].forEach(n => {
         if (n && n.src) { const im = new Image(); im.src = n.src; }
       });
     }
