@@ -598,7 +598,7 @@ a:hover{color:var(--color-accent-300)}
     <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
       <div>
         <h4 style="margin:0 0 2px">Photo Strip</h4>
-        <div style="font-size:11px;color:var(--color-neutral-500)">Photo slots for this franchise — no images on file yet. Drop images to preview.</div>
+        <div style="font-size:11px;color:var(--color-neutral-500)">{{ team.photoStripSub }}</div>
       </div>
       <a href="#" onClick="{{ goGallery }}" style="font-size:12px;text-decoration:none">See all in Gallery →</a>
     </div>
@@ -702,10 +702,16 @@ class Component extends DCLogic {
   constructor(props) { super(props); this.build(); }
   componentDidMount() {
     if (!this.ready) this.timer = setInterval(() => { if (window.HPFFL_DATA) { clearInterval(this.timer); this.build(); this.forceUpdate(); } }, 60);
+    if (!window.HPFFL_PHOTOS) {
+      let tries = 0;
+      this.photoTimer = setInterval(() => {
+        if (window.HPFFL_PHOTOS || ++tries > 80) { clearInterval(this.photoTimer); this.forceUpdate(); }
+      }, 60);
+    }
     this.onDocDown = e => { if (this.state.teamMenu && !(e.target.closest && e.target.closest('[aria-expanded]')) && !(e.target.closest && e.target.closest('button'))) this.setState({ teamMenu: false }); };
     document.addEventListener('mousedown', this.onDocDown);
   }
-  componentWillUnmount() { if (this.timer) clearInterval(this.timer); document.removeEventListener('mousedown', this.onDocDown); }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); document.removeEventListener('mousedown', this.onDocDown); }
 
   hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   eraOf(y) { return y <= 2002 ? 'paper' : (y <= 2013 ? 'fanstar' : 'espn'); }
@@ -885,10 +891,11 @@ class Component extends DCLogic {
   }
 
   photoManifest() {
-    if (this._photos) return this._photos;
     const raw = (typeof window !== 'undefined' && window.HPFFL_PHOTOS) || [];
+    if (this._photos && this._photosRaw === raw) return this._photos;
+    this._photosRaw = raw;
     this._photos = raw.filter(p => p && p.file).map((p, i) => ({
-      src: 'photos/' + p.file,
+      src: 'photos/' + encodeURIComponent(p.file),
       year: p.year == null ? null : +p.year,
       teams: [].concat(p.teams || p.team || []).filter(Boolean),
       team: [].concat(p.teams || p.team || []).filter(Boolean)[0] || null,
@@ -1354,6 +1361,9 @@ class Component extends DCLogic {
           empty: !t.cba
         }
       ],
+      photoStripSub: (this.teamPhotos(f.name) || []).length
+        ? 'Photographs tagged to this franchise, newest first.'
+        : 'Photo slots for this franchise — no images on file yet. Drop images to preview.',
       photos: this.teamPhotos(f.name) || [
         { noImg: true, hasImg: false, slot: 'ts-' + this.hash(f.name) + '-1', placeholder: 'Draft night', caption: 'Draft night, ' + f.lastSeason },
         { noImg: true, hasImg: false, slot: 'ts-' + this.hash(f.name) + '-2', placeholder: 'Trophy handoff', caption: this.championYears(f.name).length ? 'Title year — ' + this.championYears(f.name).slice(-1)[0] : 'League weekend' },
@@ -1377,7 +1387,7 @@ class Component extends DCLogic {
         .map(k => ({
           year: k === 'undated' ? null : k,
           items: byYear.get(k).slice().sort((a, b) => a.sort - b.sort)
-            .map(p => [p.caption, p.team || null, p.src])
+            .map(p => [p.caption, p.team || null, p.src, p.teams])
         }));
     } else {
       galleryData = recent.map(y => ({
@@ -1393,12 +1403,12 @@ class Component extends DCLogic {
     }
 
     const yearBtns = [{ label: 'All years', v: 'all' }].concat(galleryData.map(g => ({ label: g.year == null ? 'Undated' : String(g.year), v: g.year == null ? 'undated' : String(g.year) })));
-    const teamChipNames = ['all'].concat(Array.from(new Set(galleryData.reduce((a, g) => a.concat(g.items.map(i => i[1])), []).filter(Boolean))));
+    const teamChipNames = ['all'].concat(Array.from(new Set(galleryData.reduce((a, g) => a.concat(g.items.reduce((b, i) => b.concat(i[3] || (i[1] ? [i[1]] : [])), [])), []).filter(Boolean))));
     const groups = galleryData.filter(g => {
       const key = g.year == null ? 'undated' : String(g.year);
       return S.galleryYear === 'all' || S.galleryYear === key;
     }).map(g => {
-      const items = g.items.filter(i => S.galleryTeam === 'all' || i[1] === S.galleryTeam);
+      const items = g.items.filter(i => S.galleryTeam === 'all' || (i[3] || (i[1] ? [i[1]] : [])).indexOf(S.galleryTeam) !== -1);
       return {
         title: g.year == null ? 'Undated / General' : String(g.year),
         meta: items.length + (manifest.length ? ' photo' : ' slot') + (items.length === 1 ? '' : 's') + (g.year ? ' · ' + (this.champs[g.year] ? this.champs[g.year] + ' won the title' : 'no champion on record') : ' · no season assigned'),

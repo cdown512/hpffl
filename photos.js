@@ -16,5 +16,5 @@ window.HPFFL_PHOTOS = [
   // { file: "2011-trophy-night.jpg", year: 2011, team: "Reservoir Dogs", caption: "Trophy night" },
   // { file: "2004-warpigs-unforgiven.jpg", year: 2004, teams: ["War Pigs", "Unforgiven"], caption: "Week 9 grudge match" },
   // { file: "1999-original-trophy.jpg", caption: "The original trophy" }
-  { file: "2004 HPFFL Draft 001.jpeg", year: 2004, teams: ["War Pigs", "The Unforgiven", "Austin Rounders", "Pipemasters"], caption: "2004 Garden Room Draft, Worm highlighting his 12th round sleeper"}
+  { file: "2004 HPFFL Draft 001.jpeg", year: 2004, teams: ["War Pigs", "The Unforgiven", "Austin Rounders", "Pipemasters"], caption: "Garden Room Draft, Worm highlighting his 12th round sleeper"}
 ];
