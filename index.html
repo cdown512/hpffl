@@ -624,23 +624,23 @@ a:hover{color:var(--color-accent-300)}
 <sc-if value="{{ isGallery }}" hint-placeholder-val="{{ false }}">
 <main data-screen-label="Gallery" style="max-width:1400px;margin:0 auto;padding:40px 40px 0">
   <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-bottom:24px">
-    <div>
+    <div style="flex:1;min-width:0">
       <div style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--color-accent);margin-bottom:10px">Gallery</div>
       <h1 style="font-size:44px;margin:0 0 8px;letter-spacing:-0.03em">{{ gallery.heading }}</h1>
       <p class="text-muted" style="font-size:13.5px;margin:0;max-width:560px">{{ gallery.sub }}</p>
     </div>
-    <div class="card elev-sm" style="padding:14px 18px;flex:none;gap:2px;min-width:180px">
-      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-neutral-500)">Photos on file</div>
-      <div class="num" style="font-family:var(--font-heading);font-size:30px;line-height:1.1">{{ gallery.count }}</div>
-      <div style="font-size:11px;color:var(--color-neutral-500)">{{ gallery.spanLabel }}</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:7px;flex:none">
-      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-neutral-500)">Sort by year</div>
+    <div style="display:flex;flex-direction:column;gap:7px;flex:none;margin-right:-28px">
+      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-neutral-500);text-align:right">Sort year by</div>
       <div style="display:flex;gap:6px">
         <sc-for list="{{ gallery.sortOpts }}" as="o" hint-placeholder-count="2">
           <button class="{{ o.cls }}" onClick="{{ o.on }}" style="font-size:11.5px;padding:6px 11px">{{ o.label }}</button>
         </sc-for>
       </div>
+    </div>
+    <div class="card elev-sm" style="padding:14px 18px;flex:none;gap:2px;min-width:180px">
+      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-neutral-500)">Photos on file</div>
+      <div class="num" style="font-family:var(--font-heading);font-size:30px;line-height:1.1">{{ gallery.count }}</div>
+      <div style="font-size:11px;color:var(--color-neutral-500)">{{ gallery.spanLabel }}</div>
     </div>
   </div>
 
