@@ -1597,7 +1597,7 @@ class Component extends DCLogic {
       prev: e => { e.stopPropagation(); step(-1); },
       next: e => { e.stopPropagation(); step(1); },
       imgStyle: lb ? { backgroundImage: 'url("' + lb.src + '")', backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundColor: 'var(--color-neutral-900)', width: '100%', height: 'min(70vh, 640px)' } : null,
-      teams: lb ? (lb.teams || []).map(n => ({ label: n, on: () => this.setState({ lightbox: null, screen: 'team', teamId: n }) })) : []
+      teams: lb ? (lb.teams || []).map(n => ({ label: n, on: () => this.setState({ lightbox: null, screen: 'team', teamId: n }, () => this.scrollTop()) })) : []
     };
     this._step = step;
     if (lb && lbList.length > 1) {
