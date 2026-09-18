@@ -600,7 +600,7 @@ a:hover{color:var(--color-accent-300)}
         <h4 style="margin:0 0 2px">Photo Strip</h4>
         <div style="font-size:11px;color:var(--color-neutral-500)">{{ team.photoStripSub }}</div>
       </div>
-      <a href="#" onClick="{{ goGallery }}" style="font-size:12px;text-decoration:none">See all in Gallery →</a>
+      <a href="#" onClick="{{ goGalleryTeam }}" style="font-size:12px;text-decoration:none">See all in Gallery →</a>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
       <sc-for list="{{ team.photos }}" as="p" hint-placeholder-count="4">
@@ -719,7 +719,7 @@ a:hover{color:var(--color-accent-300)}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1200},&quot;gridMetric&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;championships&quot;,&quot;points&quot;,&quot;winpct&quot;],&quot;default&quot;:&quot;championships&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Season grid&quot;},&quot;showFunStats&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Dashboard&quot;}}">
 class Component extends DCLogic {
-  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYear: 'all', galleryTeam: 'all', teamMenu: false, gridActive: true, lightbox: null };
+  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYears: [], galleryTeams: [], teamMenu: false, gridActive: true, lightbox: null };
 
   constructor(props) { super(props); this.build(); }
   componentDidMount() {
@@ -1458,11 +1458,12 @@ class Component extends DCLogic {
 
     const yearBtns = [{ label: 'All years', v: 'all' }].concat(galleryData.map(g => ({ label: g.year == null ? 'Undated' : String(g.year), v: g.year == null ? 'undated' : String(g.year) })));
     const teamChipNames = ['all'].concat(Array.from(new Set(galleryData.reduce((a, g) => a.concat(g.items.reduce((b, i) => b.concat(i[3] || (i[1] ? [i[1]] : [])), [])), []).filter(Boolean))));
+    const selYears = S.galleryYears || [], selTeams = S.galleryTeams || [];
     const groups = galleryData.filter(g => {
       const key = g.year == null ? 'undated' : String(g.year);
-      return S.galleryYear === 'all' || S.galleryYear === key;
+      return !selYears.length || selYears.indexOf(key) !== -1;
     }).map(g => {
-      const items = g.items.filter(i => S.galleryTeam === 'all' || (i[3] || (i[1] ? [i[1]] : [])).indexOf(S.galleryTeam) !== -1);
+      const items = g.items.filter(i => !selTeams.length || (i[3] || (i[1] ? [i[1]] : [])).some(t => selTeams.indexOf(t) !== -1));
       return {
         title: g.year == null ? 'Undated / General' : String(g.year),
         meta: items.length + (manifest.length ? ' photo' : ' slot') + (items.length === 1 ? '' : 's') + (g.year ? ' · ' + (this.champs[g.year] ? this.champs[g.year] + ' won the title' : 'no champion on record') : ' · no season assigned'),
@@ -1491,8 +1492,16 @@ class Component extends DCLogic {
             ? String(Math.min.apply(null, mYears))
             : Math.min.apply(null, mYears) + '–' + Math.max.apply(null, mYears))
         : 'no photos on file yet',
-      years: yearBtns.map(y => ({ label: y.label, cls: S.galleryYear === y.v ? 'btn-primary' : 'btn-secondary', on: () => this.setState({ galleryYear: y.v }) })),
-      teamChips: teamChipNames.map(n => ({ label: n === 'all' ? 'Any team' : n, cls: S.galleryTeam === n ? 'tag-accent' : 'tag-outline', on: () => this.setState({ galleryTeam: n }) })),
+      years: yearBtns.map(y => ({
+        label: y.label,
+        cls: (y.v === 'all' ? !selYears.length : selYears.indexOf(y.v) !== -1) ? 'btn-primary' : 'btn-secondary',
+        on: () => this.setState({ galleryYears: y.v === 'all' ? [] : (selYears.indexOf(y.v) !== -1 ? selYears.filter(v => v !== y.v) : selYears.concat([y.v])) })
+      })),
+      teamChips: teamChipNames.map(n => ({
+        label: n === 'all' ? 'Any team' : n,
+        cls: (n === 'all' ? !selTeams.length : selTeams.indexOf(n) !== -1) ? 'tag-accent' : 'tag-outline',
+        on: () => this.setState({ galleryTeams: n === 'all' ? [] : (selTeams.indexOf(n) !== -1 ? selTeams.filter(v => v !== n) : selTeams.concat([n])) })
+      })),
       groups, empty: !groups.length
     };
 
@@ -1514,6 +1523,7 @@ class Component extends DCLogic {
       goDash: e => { e.preventDefault(); this.setState({ screen: 'dashboard' }); },
       goTeam: e => { e.preventDefault(); this.setState({ screen: 'team' }); },
       goGallery: e => { e.preventDefault(); this.setState({ screen: 'gallery' }); },
+      goGalleryTeam: e => { e.preventDefault(); this.setState({ screen: 'gallery', galleryYears: [], galleryTeams: [f.name] }); },
       teamId: f.name,
       teamMenuOpen: S.teamMenu,
       toggleTeamMenu: e => { e.preventDefault(); this.setState({ teamMenu: !S.teamMenu }); },
