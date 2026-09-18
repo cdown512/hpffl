@@ -710,8 +710,38 @@ class Component extends DCLogic {
     }
     this.onDocDown = e => { if (this.state.teamMenu && !(e.target.closest && e.target.closest('[aria-expanded]')) && !(e.target.closest && e.target.closest('button'))) this.setState({ teamMenu: false }); };
     document.addEventListener('mousedown', this.onDocDown);
+    this.onRoute = () => this.setState(this.readRoute());
+    window.addEventListener('popstate', this.onRoute);
+    window.addEventListener('hashchange', this.onRoute);
+    const r = this.readRoute();
+    if (r.screen !== this.state.screen || (r.teamId && r.teamId !== this.state.teamId)) this.setState(r);
+    else this.syncRoute();
   }
-  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); document.removeEventListener('mousedown', this.onDocDown); }
+  routeFor(s) {
+    if (s.screen === 'gallery') return '#/gallery';
+    if (s.screen === 'team') return s.teamId ? '#/team/' + encodeURIComponent(s.teamId) : '#/team';
+    return '#/';
+  }
+  readRoute() {
+    const h = (location.hash || '').replace(/^#\/?/, '');
+    if (!h) return { screen: 'dashboard' };
+    const parts = h.split('/');
+    if (parts[0] === 'gallery') return { screen: 'gallery' };
+    if (parts[0] === 'team') {
+      const name = parts[1] ? decodeURIComponent(parts[1]) : null;
+      const hit = name && this.franchises.filter(f => f.name.toLowerCase() === name.toLowerCase())[0];
+      return { screen: 'team', teamId: hit ? hit.name : null };
+    }
+    return { screen: 'dashboard' };
+  }
+  syncRoute() {
+    const want = this.routeFor(this.state);
+    if (location.hash !== want) { this._skipHash = true; history.pushState(null, '', want); }
+  }
+  componentDidUpdate(prev) {
+    if (prev.screen !== this.state.screen || prev.teamId !== this.state.teamId) this.syncRoute();
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('mousedown', this.onDocDown); }
 
   hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   eraOf(y) { return y <= 2002 ? 'paper' : (y <= 2013 ? 'fanstar' : 'espn'); }
