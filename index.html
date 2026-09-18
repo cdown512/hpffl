@@ -30,11 +30,11 @@ a:hover{color:var(--color-accent-300)}
 
 <header style="position:sticky;top:0;z-index:20;background:color-mix(in srgb, var(--color-bg) 92%, transparent);backdrop-filter:blur(8px);background-image:linear-gradient(to right,transparent,var(--color-divider) 48px,var(--color-divider) calc(100% - 48px),transparent);background-repeat:no-repeat;background-position:bottom;background-size:100% 1px">
   <div class="nav" style="max-width:1400px;margin:0 auto;padding:14px 40px;gap:28px">
-    <div class="nav-brand" style="display:flex;align-items:baseline;gap:10px;margin-right:auto">
+    <a class="nav-brand" href="#/" onClick="{{ goDash }}" style="display:flex;align-items:baseline;gap:10px;margin-right:auto;text-decoration:none;color:inherit" style-hover="opacity:0.8">
       <span style="letter-spacing:-0.02em">HPFFL</span>
       <span style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--color-accent)">Archives</span>
       <span style="font-size:11px;color:var(--color-neutral-500);letter-spacing:0.04em">est. 1993</span>
-    </div>
+    </a>
     <div style="display:flex;align-items:center;gap:22px">
       <a href="#" onClick="{{ goDash }}" aria-current="{{ curDash }}">League</a>
       <div style="position:relative">
@@ -660,7 +660,9 @@ a:hover{color:var(--color-accent-300)}
           <figure>
             <div style="position:relative;height:190px;border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
               <sc-if value="{{ p.hasImg }}" hint-placeholder-val="{{ false }}">
-                <div style="{{ p.imgStyle }}" role="img" aria-label="{{ p.caption }}"></div>
+                <button onClick="{{ p.openLightbox }}" aria-label="{{ p.caption }}" style="display:block;width:100%;height:100%;padding:0;border:none;background:none;cursor:pointer" style-hover="opacity:0.88">
+                  <div style="{{ p.imgStyle }}" role="img" aria-label="{{ p.caption }}"></div>
+                </button>
               </sc-if>
               <sc-if value="{{ p.noImg }}" hint-placeholder-val="{{ true }}">
                 <image-slot id="{{ p.slot }}" shape="rect" placeholder="{{ p.placeholder }}"></image-slot>
@@ -686,6 +688,26 @@ a:hover{color:var(--color-accent-300)}
       </div>
     </div>
   </sc-if>
+
+  <sc-if value="{{ lightbox.open }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" onClick="{{ lightbox.close }}" style="position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:40px">
+      <div class="dialog elev-lg" onClick="{{ lightbox.stop }}" style="max-width:min(1100px,92vw);width:100%;padding:0;overflow:hidden;position:relative">
+        <button onClick="{{ lightbox.close }}" aria-label="Close" class="btn btn-icon" style="position:absolute;top:12px;right:12px;z-index:2;background:color-mix(in srgb, var(--color-bg) 78%, transparent);backdrop-filter:blur(6px)">✕</button>
+        <div style="{{ lightbox.imgStyle }}"></div>
+        <div style="padding:18px 22px 20px;display:flex;flex-direction:column;gap:10px">
+          <div class="dialog-title" style="margin:0;font-size:17px">{{ lightbox.caption }}</div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+            <sc-if value="{{ lightbox.hasYear }}" hint-placeholder-val="{{ false }}">
+              <span class="num" style="font-size:12px;color:var(--color-neutral-400);letter-spacing:0.04em">{{ lightbox.year }}</span>
+            </sc-if>
+            <sc-for list="{{ lightbox.teams }}" as="t" hint-placeholder-count="2">
+              <button class="tag tag-accent" onClick="{{ t.on }}" style="cursor:pointer;border:none;font-family:inherit;font-size:10.5px;color:var(--color-text)">{{ t.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
 </main>
 </sc-if>
 
@@ -697,7 +719,7 @@ a:hover{color:var(--color-accent-300)}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1200},&quot;gridMetric&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;championships&quot;,&quot;points&quot;,&quot;winpct&quot;],&quot;default&quot;:&quot;championships&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Season grid&quot;},&quot;showFunStats&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Dashboard&quot;}}">
 class Component extends DCLogic {
-  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYear: 'all', galleryTeam: 'all', teamMenu: false, gridActive: true };
+  state = { screen: 'dashboard', teamId: null, era: 'all', activeOnly: true, sort: 'pct', galleryYear: 'all', galleryTeam: 'all', teamMenu: false, gridActive: true, lightbox: null };
 
   constructor(props) { super(props); this.build(); }
   componentDidMount() {
@@ -710,6 +732,8 @@ class Component extends DCLogic {
     }
     this.onDocDown = e => { if (this.state.teamMenu && !(e.target.closest && e.target.closest('[aria-expanded]')) && !(e.target.closest && e.target.closest('button'))) this.setState({ teamMenu: false }); };
     document.addEventListener('mousedown', this.onDocDown);
+    this.onKey = e => { if (e.key === 'Escape' && this.state.lightbox) this.setState({ lightbox: null }); };
+    document.addEventListener('keydown', this.onKey);
     this.onRoute = () => this.setState(this.readRoute());
     window.addEventListener('popstate', this.onRoute);
     window.addEventListener('hashchange', this.onRoute);
@@ -741,7 +765,7 @@ class Component extends DCLogic {
   componentDidUpdate(prev) {
     if (prev.screen !== this.state.screen || prev.teamId !== this.state.teamId) this.syncRoute();
   }
-  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('mousedown', this.onDocDown); }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('keydown', this.onKey); document.removeEventListener('mousedown', this.onDocDown); }
 
   hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   eraOf(y) { return y <= 2002 ? 'paper' : (y <= 2013 ? 'fanstar' : 'espn'); }
@@ -1091,7 +1115,7 @@ class Component extends DCLogic {
     const metric = P.gridMetric || 'championships';
     const era = S.era;
     const eraLabels = { all: 'All-time', paper: 'Paper 93–02', fanstar: 'Fanstar 03–13', espn: 'ESPN 14–25' };
-    if (!this.ready) return { isDash: true, isTeam: false, isGallery: false, headerStats: [], standings: [], standingsCaption: 'Loading league database…' };
+    if (!this.ready) return { isDash: true, isTeam: false, isGallery: false, headerStats: [], standings: [], standingsCaption: 'Loading league database…', lightbox: { open: false, teams: [] } };
 
     const bounds = { all: [1993, 2025], paper: [1993, 2002], fanstar: [2003, 2013], espn: [2014, 2025] }[era];
     const inEra = y => y >= bounds[0] && y <= bounds[1];
@@ -1446,6 +1470,7 @@ class Component extends DCLogic {
           slot: 'g-' + (g.year || 'und') + '-' + idx,
           placeholder: i[0], caption: i[0], hasTeam: !!i[1], team: i[1] || '',
           hasImg: !!i[2], noImg: !i[2], imgStyle: i[2] ? this.coverStyle(i[2]) : null,
+          openLightbox: i[2] ? () => this.setState({ lightbox: { src: i[2], caption: i[0], year: g.year, teams: i[3] || (i[1] ? [i[1]] : []) } }) : () => {},
           on: i[1] ? () => this.setState({ screen: 'team', teamId: i[1] }) : () => {}
         })),
         count: items.length
@@ -1469,6 +1494,18 @@ class Component extends DCLogic {
       years: yearBtns.map(y => ({ label: y.label, cls: S.galleryYear === y.v ? 'btn-primary' : 'btn-secondary', on: () => this.setState({ galleryYear: y.v }) })),
       teamChips: teamChipNames.map(n => ({ label: n === 'all' ? 'Any team' : n, cls: S.galleryTeam === n ? 'tag-accent' : 'tag-outline', on: () => this.setState({ galleryTeam: n }) })),
       groups, empty: !groups.length
+    };
+
+    const lb = S.lightbox;
+    const lightbox = {
+      open: !!lb,
+      close: () => this.setState({ lightbox: null }),
+      stop: e => e.stopPropagation(),
+      caption: lb ? lb.caption : '',
+      year: lb && lb.year != null ? String(lb.year) : '',
+      hasYear: !!(lb && lb.year != null),
+      imgStyle: lb ? { backgroundImage: 'url("' + lb.src + '")', backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundColor: 'var(--color-neutral-900)', width: '100%', height: 'min(70vh, 640px)' } : null,
+      teams: lb ? (lb.teams || []).map(n => ({ label: n, on: () => this.setState({ lightbox: null, screen: 'team', teamId: n }) })) : []
     };
 
     return {
@@ -1530,7 +1567,7 @@ class Component extends DCLogic {
       toggleGridActive: () => this.setState({ gridActive: !S.gridActive }),
       heatCaption: { championships: 'Postseason result by season, ' + gridSpan[0] + '–' + gridSpan[gridSpan.length - 1] + ' — deeper cells are longer runs, ★ is a title. Franchises A–Z; a filled cell is a season played, a hollow cell is a league year with no season record, a faint dot is a year outside the franchise run. The bordered 95 column is 1995: Strike Year, no season played.', points: 'Points per game by season — deeper is higher scoring. 2007–08 scoring was never recorded. Franchises A–Z; a filled cell is a season played, a hollow cell is a league year with no season record, a faint dot is a year outside the franchise run. The bordered 95 column is 1995: Strike Year, no season played.', winpct: 'Regular-season win rate by season — deeper is better. Franchises A–Z; a filled cell is a season played, a hollow cell is a league year with no season record, a faint dot is a year outside the franchise run. The bordered 95 column is 1995: Strike Year, no season played.' }[metric],
       heatScale: [0, 1, 2, 3, 4].map(s => ({ style: { width: '18px', height: '10px', borderRadius: '2px', background: this.heatColor(s) } })),
-      team, gallery
+      team, gallery, lightbox
     };
   }
 }
