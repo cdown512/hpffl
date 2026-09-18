@@ -1,0 +1,15 @@
+{
+  "name": "HPFFL Archives",
+  "short_name": "HPFFL",
+  "description": "The Hill Pigs Fantasy Football League archive — standings, titles, and photographs since 1993.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#161826",
+  "theme_color": "#262a60",
+  "icons": [
+    { "src": "favicon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
