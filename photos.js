@@ -190,5 +190,5 @@ window.HPFFL_PHOTOS = [
   { file: "cl Large.jpeg", year: 2016, caption: "Czar Lombardi about to be dismantled"},
   { file: "image0 Large.jpeg", year: 2020, teams: ["Paranoid Androids"], caption: "Zeke!!!"},
   { file: "imagejpeg_0-1 Large.jpeg", year: 2018, caption: "Trophy schematics"},
-  { file: "joeyTrophy Large.jpeg", year: 2018, teams: [], caption: ""}
+  { file: "joeyTrophy Large.jpeg", year: 2018, teams: ["Paranoid Androids", "Dark Horse"], caption: "More trophy plans"}
 ];
