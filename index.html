@@ -928,7 +928,7 @@ class Component extends DCLogic {
         pa: t.pa ? Math.round(t.pa).toLocaleString() : '—',
         diff: diff != null ? (diff > 0 ? '+' : '') + Math.round(diff).toLocaleString() : '—',
         diffStyle: { color: diff == null ? 'var(--color-neutral-700)' : (diff > 0 ? 'var(--color-accent-300)' : 'var(--color-neutral-400)') },
-        on: () => this.setState({ screen: 'team', teamId: x.f.name })
+        on: () => this.setState({ screen: 'team', teamId: x.f.name }, () => this.scrollTop())
       };
     });
   }
@@ -1138,7 +1138,7 @@ class Component extends DCLogic {
       const ringSet = new Set(gapYears);
       return {
         name: f.name,
-        on: () => this.setState({ screen: 'team', teamId: f.name }),
+        on: () => this.setState({ screen: 'team', teamId: f.name }, () => this.scrollTop()),
         cells: years.map(y => {
           if (y === 1995) return { style: { flex: '1', minWidth: '0', height: '20px', background: 'transparent', borderLeft: '1px solid var(--color-accent-700)', borderRight: '1px solid var(--color-accent-700)', display: 'grid', placeItems: 'center', fontSize: '9px', color: 'var(--color-neutral-700)' }, mark: '', title: '1995:  Strike Year — no season played' };
           const r = map[y];
@@ -1220,7 +1220,7 @@ class Component extends DCLogic {
     const champLeaders = champList.slice(0, 8).map(x => ({
       name: x.f.name, count: x.years.length, years: x.years.join(' · '),
       barStyle: { height: '100%', width: (x.years.length / maxC * 100).toFixed(1) + '%', background: 'var(--color-accent-500)', borderRadius: '3px' },
-      on: () => this.setState({ screen: 'team', teamId: x.f.name })
+      on: () => this.setState({ screen: 'team', teamId: x.f.name }, () => this.scrollTop())
     }));
 
     const prizeList = eraFranchises.map(f => ({ f, t: this.totals(f.name, era) })).filter(x => x.t.potw + x.t.totw > 0).sort((a, b) => (b.t.potw + b.t.totw) - (a.t.potw + a.t.totw));
@@ -1241,7 +1241,7 @@ class Component extends DCLogic {
         ppg: x.t.pg && x.t.ppf ? (x.t.ppf / x.t.pg).toFixed(1) : '—',
         margin: x.t.ppf ? ((x.t.ppf - x.t.ppa) > 0 ? '+' : '') + Math.round(x.t.ppf - x.t.ppa) : '—',
         marginStyle: { color: (x.t.ppf - x.t.ppa) > 0 ? 'var(--color-accent-300)' : 'var(--color-neutral-400)' },
-        on: () => this.setState({ screen: 'team', teamId: x.f.name })
+        on: () => this.setState({ screen: 'team', teamId: x.f.name }, () => this.scrollTop())
       }));
 
     const maxMl = Math.max.apply(null, allTotals.map(x => x.t.mla).concat([1]));
@@ -1251,7 +1251,7 @@ class Component extends DCLogic {
         name: x.f.name, value: x.t.mlw + ' / ' + x.t.mla,
         barStyle: { height: '6px', width: (x.t.mla / maxMl * 100).toFixed(1) + '%', background: 'var(--color-neutral-700)', borderRadius: '3px', position: 'relative' },
         winStyle: { position: 'absolute', top: '0', bottom: '0', left: '0', width: (x.t.mla ? x.t.mlw / x.t.mla * 100 : 0).toFixed(1) + '%', background: 'var(--color-accent-500)', borderRadius: '3px' },
-        on: () => this.setState({ screen: 'team', teamId: x.f.name })
+        on: () => this.setState({ screen: 'team', teamId: x.f.name }, () => this.scrollTop())
       }));
 
     const maxCb = Math.max.apply(null, allTotals.map(x => x.t.cba).concat([1]));
@@ -1261,7 +1261,7 @@ class Component extends DCLogic {
         name: x.f.name, value: x.t.cbl + ' / ' + x.t.cba,
         barStyle: { height: '6px', width: (x.t.cba / maxCb * 100).toFixed(1) + '%', background: 'var(--color-neutral-800)', borderRadius: '3px', position: 'relative' },
         winStyle: { position: 'absolute', top: '0', bottom: '0', left: '0', width: (x.t.cba ? x.t.cbl / x.t.cba * 100 : 0).toFixed(1) + '%', background: 'var(--color-accent-700)', borderRadius: '3px' },
-        on: () => this.setState({ screen: 'team', teamId: x.f.name })
+        on: () => this.setState({ screen: 'team', teamId: x.f.name }, () => this.scrollTop())
       }));
 
     const eraColor = { paper: 'var(--color-neutral-500)', fanstar: 'var(--color-accent-2-500)', espn: 'var(--color-accent)' };
@@ -1274,7 +1274,7 @@ class Component extends DCLogic {
       timeline.push({
         year: y, champ, meta, color: this.champs[y] ? 'var(--color-text)' : 'var(--color-neutral-600)',
         dotStyle: { width: '7px', height: '7px', borderRadius: '50%', flex: 'none', background: y === 1995 ? 'transparent' : eraColor[e], boxShadow: y === 1995 ? 'inset 0 0 0 1px var(--color-neutral-700)' : 'none' },
-        on: this.champs[y] ? () => this.setState({ screen: 'team', teamId: this.champs[y] }) : () => {}
+        on: this.champs[y] ? () => this.setState({ screen: 'team', teamId: this.champs[y] }, () => this.scrollTop()) : () => {}
       });
     }
 
@@ -1287,7 +1287,7 @@ class Component extends DCLogic {
         name: f.name, seasons: era === 'all' ? (f.leagueSeasons || t.seasons) : (t.seasons || '—'),
         barStyle: { position: 'absolute', top: '0', bottom: '0', left: left.toFixed(1) + '%', width: Math.max(1.2, right - left).toFixed(1) + '%', background: f.active ? 'var(--color-accent-700)' : 'var(--color-neutral-800)', borderRadius: '2px' },
         marks: champYearsIn(f.name).map(y => ({ style: { position: 'absolute', top: '-2px', bottom: '-2px', left: ((y - bounds[0]) / span * 100).toFixed(1) + '%', width: '3px', background: 'var(--color-accent-200)', borderRadius: '1px' } })),
-        on: () => this.setState({ screen: 'team', teamId: f.name })
+        on: () => this.setState({ screen: 'team', teamId: f.name }, () => this.scrollTop())
       };
     });
 
@@ -1548,7 +1548,7 @@ class Component extends DCLogic {
             placeholder: i[0], caption: i[0], hasTeam: !!i[1], team: i[1] || '',
             hasImg: !!i[2], noImg: !i[2], src: i[2] || '',
             openLightbox: i[2] ? () => this.setState({ lightbox: { i: fi } }) : () => {},
-            on: i[1] ? () => this.setState({ screen: 'team', teamId: i[1] }) : () => {}
+            on: i[1] ? () => this.setState({ screen: 'team', teamId: i[1] }, () => this.scrollTop()) : () => {}
           };
         }),
         count: items.length
@@ -1616,7 +1616,7 @@ class Component extends DCLogic {
       isDash: S.screen === 'dashboard', isTeam: S.screen === 'team', isGallery: S.screen === 'gallery',
       curDash: S.screen === 'dashboard' ? 'page' : null, curTeam: S.screen === 'team' ? 'page' : null, curGal: S.screen === 'gallery' ? 'page' : null,
       goDash: e => { e.preventDefault(); this.setState({ screen: 'dashboard' }); },
-      goTeam: e => { e.preventDefault(); this.setState({ screen: 'team' }); },
+      goTeam: e => { e.preventDefault(); this.setState({ screen: 'team' }, () => this.scrollTop()); },
       goGallery: e => { e.preventDefault(); this.setState({ screen: 'gallery' }); },
       goGalleryTeam: e => { e.preventDefault(); this.setState({ screen: 'gallery', galleryYears: [], galleryTeams: [f.name] }, () => this.scrollTop()); },
       teamId: f.name,
@@ -1634,7 +1634,7 @@ class Component extends DCLogic {
             name: x.name,
             meta: (tt.champ ? tt.champ + '★ · ' : '') + (x.leagueSeasons ? x.leagueSeasons + ' sea · ' : '') + x.first + '–' + (x.active ? '' : x.lastSeason),
             style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '14px', width: '100%', textAlign: 'left', background: x.name === f.name && S.screen === 'team' ? 'var(--color-neutral-800)' : 'transparent', border: 'none', borderRadius: 'var(--radius-sm)', padding: '5px 8px', font: 'inherit', fontSize: '13px', color: 'var(--color-text)', cursor: 'pointer' },
-            on: () => this.setState({ screen: 'team', teamId: x.name, teamMenu: false })
+            on: () => this.setState({ screen: 'team', teamId: x.name, teamMenu: false }, () => this.scrollTop())
           };
         })
       })),
