@@ -1,4 +1,4 @@
--- HPFFL Archives — photo manifest, generated from photos.js (175 photos, 292 team tags).
+-- HPFFL Archives — photo manifest, generated from photos.js (175 photos, 294 team tags).
 -- Replaces every photo row and its tags. Safe to re-run: it clears first.
 -- Requires the files to be uploaded to the 'photos' storage bucket under
 -- exactly these filenames.
@@ -182,7 +182,7 @@ with src (file, year, caption, sort) as (values
     ('cl Large.jpeg', 2016, 'Czar Lombardi about to be dismantled', 171),
     ('image0 Large.jpeg', 2020, 'Zeke!!!', 172),
     ('imagejpeg_0-1 Large.jpeg', 2018, 'Trophy schematics', 173),
-    ('joeyTrophy Large.jpeg', 2018, null, 174)
+    ('joeyTrophy Large.jpeg', 2018, 'More trophy plans', 174)
 ),
 ins as (
   insert into photos (file, storage_path, year, caption, sort)
@@ -481,7 +481,9 @@ tag (file, team, sort) as (values
     ('IMG_8167 Large.jpeg', 'Dallas Plowgirls', 0),
     ('IMG_8175 Large.jpeg', 'Dallas Plowgirls', 0),
     ('IMG_8982 Large.jpeg', 'Dallas Plowgirls', 0),
-    ('image0 Large.jpeg', 'Paranoid Androids', 0)
+    ('image0 Large.jpeg', 'Paranoid Androids', 0),
+    ('joeyTrophy Large.jpeg', 'Paranoid Androids', 0),
+    ('joeyTrophy Large.jpeg', 'Dark Horse', 1)
 )
 insert into photo_franchises (photo_id, franchise_id, sort)
 select ins.id, f.id, tag.sort::int
@@ -493,4 +495,4 @@ commit;
 
 -- Check:
 --   select count(*) from photos;             -- expect 175
---   select count(*) from photo_franchises;   -- expect 292
+--   select count(*) from photo_franchises;   -- expect 294
