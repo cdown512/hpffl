@@ -87,7 +87,7 @@ commit;
 select b.franchise,
        b.ending_balance,
        e.expected,
-       case when b.ending_balance = e.expected then 'ok' else 'MISMATCH' end as check
+       case when b.ending_balance = e.expected then 'ok' else 'MISMATCH' end as verdict
   from v_accounting_balances b
   join (values
     ('Paranoid Androids', -356.00),
@@ -108,4 +108,4 @@ select b.franchise,
     ('Grim Outlook', -53.00)
   ) as e(team, expected) on franchise_by_alias(e.team) = b.franchise_id
  where b.year = 2026
- order by check desc, b.franchise;
+ order by verdict desc, b.franchise;
