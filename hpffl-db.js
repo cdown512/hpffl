@@ -23,6 +23,19 @@
     });
   }
 
+  // The page references hpffl-data.js / photos.js twice (head + helmet), so the
+  // static snapshot re-executes after this fetch resolves. Lock the globals to
+  // the database values so the later assignment can't clobber them.
+  function lock(name, value) {
+    try {
+      Object.defineProperty(window, name, {
+        configurable: true, enumerable: true,
+        get: function () { return value; },
+        set: function () {}
+      });
+    } catch (e) { window[name] = value; }
+  }
+
   function num(v) { return v == null ? null : +v; }
   function int(v) { return v == null ? 0 : +v; }
   function flag(v) { return v ? 1 : 0; }
@@ -50,7 +63,7 @@
     var champs = {};
     ls.forEach(function (r) { if (r.champ_franchise_id) champs[r.year] = r.champ_franchise_id; });
 
-    window.HPFFL_DATA = {
+    lock('HPFFL_DATA', {
       franchises: fr.map(function (f) {
         return {
           id: f.id, name: f.name, active: !!f.active,
@@ -75,9 +88,9 @@
         return { year: r.year, era: r.era, teams: r.teams, games: r.games, champ: r.champ_franchise_id || null, note: r.note || null };
       }),
       champs: champs
-    };
+    });
 
-    window.HPFFL_PHOTOS = ph.map(function (p) {
+    lock('HPFFL_PHOTOS', ph.map(function (p) {
       var tags = (p.photo_franchises || []).slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
       return {
         file: p.file,
@@ -87,7 +100,7 @@
         caption: p.caption || null,
         sort: p.sort == null ? 0 : +p.sort
       };
-    });
+    }));
 
     window.HPFFL_DB.status = 'ready';
     window.dispatchEvent(new CustomEvent('hpffl-data'));

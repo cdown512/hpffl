@@ -1,10 +1,9 @@
 /* HPFFL Archives — Supabase connection.
-   Fill these in from your Supabase project: Settings → API.
-   The anon key is publishable — it is safe in a static site because every
-   table is read-only for the anon role (see db/schema.sql).
-   Leave url empty to run the site off the local hpffl-data.js snapshot. */
+   The publishable key is safe in a static site: every table is read-only for
+   public callers (see db/schema.sql). Never put the sb_secret_ key here.
+   Blank the url to run the site off the local hpffl-data.js snapshot. */
 window.HPFFL_SUPABASE = {
-  url: '',            // e.g. 'https://abcdefghijkl.supabase.co'
-  anonKey: '',        // e.g. 'eyJhbGciOi...'
+  url: 'https://wsvlicolbjwppnamuziw.supabase.co',
+  anonKey: 'sb_publishable_Cf9vGH0Xe04pmN2Z9uXe3A_HhqvwlcR',
   photoBucket: 'photos'
 };
