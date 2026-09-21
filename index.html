@@ -19,6 +19,8 @@
 <script src="./image-slot.js"></script>
 <script src="./hpffl-data.js"></script>
 <script src="./photos.js"></script>
+<script src="./hpffl-config.js"></script>
+<script src="./hpffl-db.js"></script>
 <style>
 @font-face{font-family:'Outfit';src:url('uploads/Outfit-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Outfit';src:url('uploads/Outfit-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
@@ -755,6 +757,8 @@ class Component extends DCLogic {
 
   constructor(props) { super(props); this.build(); }
   componentDidMount() {
+    this._onData = () => { this.build(); this.forceUpdate(); };
+    window.addEventListener('hpffl-data', this._onData);
     if (!this.ready) this.timer = setInterval(() => { if (window.HPFFL_DATA) { clearInterval(this.timer); this.build(); this.forceUpdate(); } }, 60);
     if (!window.HPFFL_PHOTOS) {
       let tries = 0;
@@ -805,7 +809,7 @@ class Component extends DCLogic {
     if (prev.screen !== this.state.screen || prev.teamId !== this.state.teamId) this.syncRoute();
     requestAnimationFrame(() => this.measureStrip());
   }
-  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('keydown', this.onKey); document.removeEventListener('mousedown', this.onDocDown); }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.photoTimer) clearInterval(this.photoTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('popstate', this.onRoute); window.removeEventListener('hashchange', this.onRoute); document.removeEventListener('keydown', this.onKey); document.removeEventListener('mousedown', this.onDocDown); window.removeEventListener('hpffl-data', this._onData); }
 
   stripRef = el => { this._strip = el; if (el) requestAnimationFrame(() => this.measureStrip()); };
   measureStrip() {
@@ -1013,7 +1017,7 @@ class Component extends DCLogic {
     if (this._photos && this._photosRaw === raw) return this._photos;
     this._photosRaw = raw;
     this._photos = raw.filter(p => p && p.file).map((p, i) => ({
-      src: 'photos/' + encodeURIComponent(p.file),
+      src: p.url || 'photos/' + encodeURIComponent(p.file),
       year: p.year == null ? null : +p.year,
       teams: [].concat(p.teams || p.team || []).filter(Boolean),
       team: [].concat(p.teams || p.team || []).filter(Boolean)[0] || null,
