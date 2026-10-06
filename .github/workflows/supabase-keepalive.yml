@@ -1,7 +1,7 @@
 name: Supabase keep-alive
 
 # Supabase pauses Free Plan projects after ~7 days of low activity. This pings
-# one table twice a week so the inactivity timer never runs out.
+# one table daily so a missed run or two can't let the timer run out.
 #
 # Setup: repo → Settings → Secrets and variables → Actions → New repository secret
 #   SUPABASE_URL   https://wsvlicolbjwppnamuziw.supabase.co
@@ -10,18 +10,21 @@ name: Supabase keep-alive
 
 on:
   schedule:
-    - cron: '17 13 * * 1,4'   # Mondays and Thursdays, 13:17 UTC
+    - cron: '17 13 * * *'     # daily, 13:17 UTC
   workflow_dispatch:           # also runnable by hand from the Actions tab
 
 jobs:
   ping:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04      # pinned; avoids the ubuntu-latest → 26 migration
+    timeout-minutes: 5
     steps:
       - name: Ping the database
         run: |
           code=$(curl -s -o /tmp/out.txt -w '%{http_code}' \
-            "https://wsvlicolbjwppnamuziw.supabase.co/rest/v1/franchises?select=id&limit=1" \
-            -H "apikey: sb_publishable_Cf9vGH0Xe04pmN2Z9uXe3A_HhqvwlcR")
+            --retry 3 --retry-delay 10 --retry-all-errors --max-time 30 \
+            -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/eras?select=id&limit=1")
           echo "HTTP $code"
           cat /tmp/out.txt
           if [ "$code" != "200" ]; then
