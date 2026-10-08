@@ -2,11 +2,7 @@ name: Supabase keep-alive
 
 # Supabase pauses Free Plan projects after ~7 days of low activity. This pings
 # one table daily so a missed run or two can't let the timer run out.
-#
-# Setup: repo → Settings → Secrets and variables → Actions → New repository secret
-#   SUPABASE_URL   https://wsvlicolbjwppnamuziw.supabase.co
-#   SUPABASE_KEY   your sb_publishable_... key
-# (The publishable key is enough — this only reads.)
+# The URL and publishable key are public (same values as hpffl-config.js).
 
 on:
   schedule:
@@ -15,16 +11,19 @@ on:
 
 jobs:
   ping:
-    runs-on: ubuntu-24.04      # pinned; avoids the ubuntu-latest → 26 migration
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Ping the database
+        env:
+          SUPABASE_URL: https://wsvlicolbjwppnamuziw.supabase.co
+          SUPABASE_KEY: sb_publishable_Cf9vGH0Xe04pmN2Z9uXe3A_HhqvwlcR
         run: |
           code=$(curl -s -o /tmp/out.txt -w '%{http_code}' \
             --retry 3 --retry-delay 10 --retry-all-errors --max-time 30 \
-            -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/eras?select=id&limit=1")
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/eras?select=id&limit=1")
           echo "HTTP $code"
           cat /tmp/out.txt
           if [ "$code" != "200" ]; then
